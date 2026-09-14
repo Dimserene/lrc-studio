@@ -70,7 +70,36 @@
     if (!doc || !Array.isArray(doc.rows) || doc.rows.length > 3000 || typeof doc.meta !== 'object' || doc.meta === null || Array.isArray(doc.meta)) return false;
     return doc.rows.every(r=>r && typeof r.text==='string' && (r.ms===null || (Number.isSafeInteger(r.ms) && r.ms>=0)));
   }
-  const api={parseTime,time,parse,issues,exportLrc,shift,validateDraft};
+  function nextUntimed(rows, selected, includeCurrent=false) {
+    if (!rows.length) return -1;
+    const start = Math.max(0, Math.min(rows.length-1, selected));
+    for (let step=includeCurrent?0:1; step<(includeCurrent?rows.length:rows.length+1); step++) {
+      const i=(start+step)%rows.length;
+      if (rows[i].ms===null) return i;
+    }
+    return -1;
+  }
+  function nextStampIndex(rows, selected, skipTimed=false) {
+    for (let i=selected+1;i<rows.length;i++) if (!skipTimed || rows[i].ms===null) return i;
+    return -1;
+  }
+  function firstProblem(rows) {
+    const missing=rows.findIndex(r=>r.ms===null);
+    if (missing>=0) return {index:missing,kind:'missing'};
+    for (let i=1;i<rows.length;i++) if(rows[i].ms<rows[i-1].ms) return {index:i,kind:'backwards'};
+    return null;
+  }
+  function activeLines(rows, position) {
+    if (!Number.isFinite(position) || position < 0) return [];
+    let latest=-1, indices=[];
+    rows.forEach((row,i)=>{
+      if(row.ms===null || row.ms>position)return;
+      if(row.ms>latest){latest=row.ms;indices=[i];}
+      else if(row.ms===latest)indices.push(i);
+    });
+    return indices;
+  }
+  const api={activeLines,parseTime,time,parse,issues,exportLrc,shift,validateDraft,nextUntimed,nextStampIndex,firstProblem};
   if (typeof module!=='undefined') module.exports=api;
   root.Lrc=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

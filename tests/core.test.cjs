@@ -49,3 +49,35 @@ test('draft rejects corrupt row time and keeps untimed lines',()=>{
   assert.equal(L.validateDraft({meta:{},rows:[{ms:-1,text:'a'}]}),false);
   assert.equal(L.validateDraft({meta:{},rows:[{ms:null,text:'a'}]}),true);
 });
+test('next untimed wraps to earlier gaps without selecting timed rows',()=>{
+  const rows=[{ms:0},{ms:null},{ms:300},{ms:null}];
+  assert.equal(L.nextUntimed(rows,1),3);
+  assert.equal(L.nextUntimed(rows,3),1);
+  assert.equal(L.nextUntimed(rows,1,true),1);
+  assert.equal(L.nextUntimed([{ms:0}],0),-1);
+  assert.equal(L.nextUntimed([],0),-1);
+});
+test('skip-timed advancement never wraps the timeline and handles completion',()=>{
+  const rows=[{ms:100},{ms:200},{ms:null},{ms:400}];
+  assert.equal(L.nextStampIndex(rows,0,true),2);
+  assert.equal(L.nextStampIndex(rows,0,false),1);
+  assert.equal(L.nextStampIndex(rows,2,true),-1);
+  assert.equal(L.nextStampIndex(rows,3,false),-1);
+});
+test('export guidance identifies missing then backwards time, equal times accepted',()=>{
+  assert.deepEqual(L.firstProblem([{ms:200},{ms:100},{ms:null}]),{index:2,kind:'missing'});
+  assert.deepEqual(L.firstProblem([{ms:200},{ms:100}]),{index:1,kind:'backwards'});
+  assert.equal(L.firstProblem([{ms:0},{ms:0}]),null);
+});
+test('active subtitles ignore untimed rows and follow exact boundaries and backwards seek',()=>{
+ const rows=[{ms:null},{ms:1000},{ms:2000}];
+ assert.deepEqual(L.activeLines(rows,999),[]);
+ assert.deepEqual(L.activeLines(rows,1000),[1]);
+ assert.deepEqual(L.activeLines(rows,2500),[2]);
+ assert.deepEqual(L.activeLines(rows,1500),[1]);
+});
+test('active subtitles include translations with equal timestamps and tolerate unsorted editing',()=>{
+ assert.deepEqual(L.activeLines([{ms:3000},{ms:1000},{ms:1000}],2000),[1,2]);
+ assert.deepEqual(L.activeLines([{ms:0}],0),[0]);
+ assert.deepEqual(L.activeLines([{ms:0}],NaN),[]);
+});
