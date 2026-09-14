@@ -49,11 +49,12 @@ function render() {
 function usable(p) { return !!(p.permission && p.connected && p.valid && p.title && p.trackKey && p.trackKey===doc.trackKey && Number.isFinite(p.position)); }
 function updatePlayerUI() {
   const p=player;
-  $('song').textContent=p.title || '先在 YouTube Music 播放歌曲';
+  const playerName=p.playerName || 'YouTube Music ReVanced';
+  $('song').textContent=p.title || '先在 '+playerName+' 播放歌曲';
   $('artist').textContent=p.artist || '回到這裡，就能開始對時';
   $('clock').textContent=p.connected&&p.valid?Lrc.time(p.position||0,doc.precision):'--:--.--';
   $('duration').textContent=p.duration?'／ '+Lrc.time(p.duration).split('.')[0]:'／ --:--';
-  $('status').textContent=!native?'介面預覽 · 請在 Android App 使用':!p.permission?'尚未開啟通知存取權':!p.connected?'請在 YouTube Music 開始播放':p.remote?'遠端播放不支援精確打點':'已連接 YouTube Music';
+  $('status').textContent=!native?'介面預覽 · 請在 Android App 使用':!p.permission?'尚未開啟通知存取權':!p.connected?'請在 '+playerName+' 開始播放':p.remote?'遠端播放不支援精確打點':'已連接 '+playerName;
   $('statusDot').classList.toggle('on',!!p.connected&&!!p.valid);
   $('connect').textContent=p.permission?'權限':'連接';
   $('live').textContent=p.valid?(p.playing?'同步播放中':'已暫停'):'等待有效進度';
@@ -164,6 +165,7 @@ function settings() {
 }
 function toolMenu() {
   const actions=[
+    ['音樂播放器',()=>native?.choosePlayer ? native.choosePlayer() : notify('請在新版 Android App 選擇播放器')],
     ['歌曲資料',metaDialog],['整體／區段位移',shiftDialog],['分句',splitLine],['與下一句合併',()=>{
       if(doc.selected>=doc.rows.length-1)return notify('目前已是最後一句');
       confirmAction('合併兩句？','保留目前這句的時間，下一句文字併入同一行。',()=>change(()=>{doc.rows[doc.selected].text+=' '+doc.rows[doc.selected+1].text;doc.rows.splice(doc.selected+1,1);}));

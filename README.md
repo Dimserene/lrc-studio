@@ -1,18 +1,19 @@
 # 拍點 LRC — Android YouTube Music 對時編輯器
 
-版本：0.1.0 原型。Android 9（API 28）以上。
+版本：0.1.1 原型。Android 9（API 28）以上。
 
 **本包是原始碼專案，不是可安裝 APK。** 目前已執行 JavaScript 核心測試；Android 編譯、Lint、實際 WebView 畫面及 YouTube Music 真機同步仍待驗證。請勿將本版視為已驗收發行版。
 
 ## 工作方式
 
-在 YouTube Music 官方 App 播放歌曲，本 App 以 Android MediaSessionManager 取得該 App 的 MediaController、播放位置與控制能力。使用者開啟系統通知存取權後才能連接。歌詞工作區以 APK 內附的 HTML/CSS/JavaScript 在 WebView 呈現；播放連接、檔案存取及草稿保存由原生 Java 負責。不是遠端網站或 PWA。
+在所選的 YouTube Music 官方版或 ReVanced 播放歌曲，本 App 以 Android MediaSessionManager 取得該 App 的 MediaController、播放位置與控制能力。使用者開啟系統通知存取權後才能連接。歌詞工作區以 APK 內附的 HTML/CSS/JavaScript 在 WebView 呈現；播放連接、檔案存取及草稿保存由原生 Java 負責。不是遠端網站或 PWA。
 
 YouTube Music 仍負責登入、播放及帳號限制。本 App 不取得音訊、不下載歌曲，也不擷取平台歌詞。沒有宣告 INTERNET 或儲存空間廣泛存取權限。通知監聽服務不讀取通知內容；Android 授權範圍本身較大，首次授權前會說明。
 
 ## 已實作功能
 
-- 僅連接 `com.google.android.apps.youtube.music` 媒體工作階段。
+- 預設連接 `app.revanced.android.apps.youtube.music`（依使用者提供的套件名稱）。更多工具 → 音樂播放器可切換官方版 `com.google.android.apps.youtube.music`，選擇會保留；只連接選定套件，不會自動改播另一個 App。
+- 曲目識別包含播放器套件名稱，切換播放器後需重新連結歌詞；從 0.1.0 升級亦需重新連結，既有歌詞時間不變。
 - 在按下打點鍵的當下讀取原生播放位置；播放中依 Android 單調時鐘、最後更新時間和播放速率推算。
 - 一按打點、自動下一句；選句重打、上一句／下一句。
 - 單句 ±50 ms、手動填寫時間、整體／區段位移。
@@ -107,3 +108,7 @@ node tests/ui.test.cjs
 - [Android Gradle Plugin 8.9](https://developer.android.com/build/releases/agp-8-9-0-release-notes)
 
 本 App 為獨立製作，與 YouTube、YouTube Music 或 Google 無隸屬關係。
+
+## 0.1.1 更新
+
+新增指定 ReVanced 套件、原生播放器選擇、啟動對應 App、依選擇顯示連線狀態。ReVanced 的實際對時與控制能力尚未真機驗證。完整 ZIP 可覆蓋原專案同名檔案，不包含或刪除既有 .git。重新提交並推送後由 Actions 建置 APK。

@@ -32,7 +32,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public final class MainActivity extends Activity {
-    private static final String YTM = "com.google.android.apps.youtube.music";
+    private static final String OFFICIAL = "com.google.android.apps.youtube.music";
+    private static final String REVANCED = "app.revanced.android.apps.youtube.music";
+    private volatile String selectedPackage = REVANCED;
+    private String playerName() { return REVANCED.equals(selectedPackage) ? "YouTube Music ReVanced" : "YouTube Music"; }
     private final Handler handler = new Handler(Looper.getMainLooper());
     private WebView web;
     private MediaSessionManager manager;
@@ -58,6 +61,8 @@ public final class MainActivity extends Activity {
     };
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
+        String preference = getPreferences(MODE_PRIVATE).getString("player_package", REVANCED);
+        selectedPackage = OFFICIAL.equals(preference) ? OFFICIAL : REVANCED;
         if (saved != null) exportText = saved.getString("export", "");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         manager = (MediaSessionManager) getSystemService(MEDIA_SESSION_SERVICE);
@@ -116,7 +121,7 @@ public final class MainActivity extends Activity {
     private void attach(List<MediaController> list) {
         MediaController chosen = null;
         if (list != null) for (MediaController c : list) {
-            if (YTM.equals(c.getPackageName())) {
+            if (selectedPackage.equals(c.getPackageName())) {
                 if (chosen == null) chosen = c;
                 if (c.getPlaybackState() != null && c.getPlaybackState().getState() == PlaybackState.STATE_PLAYING) { chosen = c; break; }
             }
@@ -130,6 +135,7 @@ public final class MainActivity extends Activity {
         MediaController controller = this.controller;
         JSONObject j = new JSONObject();
         try {
+            j.put("playerName", playerName()); j.put("playerPackage", selectedPackage);
             j.put("permission", allowed()); j.put("connected", controller != null);
             if (controller != null) {
                 PlaybackState s = controller.getPlaybackState(); MediaMetadata m = controller.getMetadata();
@@ -138,7 +144,7 @@ public final class MainActivity extends Activity {
                 String id = m == null ? "" : safe(m.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 long duration = m == null ? 0 : m.getLong(MediaMetadata.METADATA_KEY_DURATION);
                 j.put("title", title); j.put("artist", artist); j.put("duration", duration);
-                j.put("trackKey", id + "|" + title + "|" + artist + "|" + duration);
+                j.put("trackKey", controller.getPackageName() + "|" + id + "|" + title + "|" + artist + "|" + duration);
                 boolean remote = controller.getPlaybackInfo() != null && controller.getPlaybackInfo().getPlaybackType() == MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE;
                 j.put("remote", remote);
                 if (s != null) {
@@ -171,9 +177,25 @@ public final class MainActivity extends Activity {
             .setTitle("連接 YouTube Music")
             .setMessage("請在下一頁開啟「拍點 LRC」的通知存取權。Android 將此權限授予整個通知監聽服務；本 App 只使用它取得 YouTube Music 媒體進度，不讀取通知內容，也沒有網路權限。你可隨時在系統設定撤銷。")
             .setNegativeButton("取消", null).setPositiveButton("前往設定", (d,w) -> startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))).show()); }
+        @JavascriptInterface public void choosePlayer() { runOnUiThread(() -> {
+            String[] names = {"YouTube Music ReVanced", "YouTube Music 官方版"};
+            new AlertDialog.Builder(MainActivity.this)
+                .setTitle("選擇音樂播放器")
+                .setSingleChoiceItems(names, REVANCED.equals(selectedPackage) ? 0 : 1, (dialog, which) -> {
+                    String next = which == 0 ? REVANCED : OFFICIAL;
+                    if (!next.equals(selectedPackage)) {
+                        disconnect();
+                        selectedPackage = next;
+                        getPreferences(MODE_PRIVATE).edit().putString("player_package", next).apply();
+                        refresh(); publish();
+                        message("已選擇 " + playerName() + "，請播放歌曲後重新連結歌詞");
+                    }
+                    dialog.dismiss();
+                }).setNegativeButton("取消", null).show();
+        }); }
         @JavascriptInterface public void openMusic() { runOnUiThread(() -> {
-            Intent launch = getPackageManager().getLaunchIntentForPackage(YTM);
-            if (launch == null) message("請先安裝 YouTube Music"); else startActivity(launch);
+            Intent launch = getPackageManager().getLaunchIntentForPackage(selectedPackage);
+            if (launch == null) message("找不到 " + playerName() + "，請確認已安裝，或到更多工具切換播放器"); else startActivity(launch);
         }); }
         @JavascriptInterface public void transport(String action, long target) { runOnUiThread(() -> {
             if (!allowed() || controller == null) { message("尚未連接 YouTube Music"); return; }
