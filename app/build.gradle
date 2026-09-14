@@ -1,0 +1,13 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'tw.dimserene.lrcstudio'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'tw.dimserene.lrcstudio'
+        minSdk 28
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
