@@ -1,6 +1,6 @@
 # 拍點 LRC — Android YouTube Music 對時編輯器
 
-版本：0.1.5 原型。Android 9（API 28）以上。
+版本：0.1.6 原型。Android 9（API 28）以上。
 
 **本包是原始碼專案，不是可安裝 APK。** 目前已執行 JavaScript 核心測試；Android 編譯、Lint、實際 WebView 畫面及 YouTube Music 真機同步仍待驗證。請勿將本版視為已驗收發行版。
 
@@ -146,3 +146,9 @@ node tests/ui.test.cjs
 使用 Android 原生沉浸模式隱藏狀態列及導覽列；Android 11 以上使用 WindowInsetsController，Android 9–10 使用 immersive-sticky 相容旗標。啟動、回到前景、重新取得焦點與旋轉後會套用。
 
 Android 11 以上的 WebView 邊距改為保護相機開孔與鍵盤，避免為已隱藏的系統列保留空白。從螢幕邊緣滑動仍可暫時叫出系統列，之後由系統收起；鍵盤與系統檔案挑選器仍受 Android 控制。這次為原生視窗層修正，尚未完成 Android 編譯與真機驗證。
+
+## 0.1.6 更多工具圖示
+
+15 個更多工具按鈕各自配置原創線條 SVG 圖示並保留文字名稱。播放器與試聽採暖杏色，編輯操作採柔紫，新增／備份採薄荷綠，刪除／清空時間採玫瑰色。固定圖示尺寸、線寬與圓角底框，長名稱可換行。圖示直接隨 App 載入，不需網路，不依賴 emoji 或圖示字型。獨立 SVG 原稿位於 design/menu-icons/。
+
+已檢查 15 個功能映射與 SVG XML，並通過 JavaScript 語法檢查。Android 建置與實機版面尚待驗證。

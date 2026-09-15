@@ -175,3 +175,13 @@ dialog textarea { min-height: 160px; resize: vertical; line-height: 1.8; }
 @media (prefers-reduced-motion:reduce) {
   *, *::before, *::after { transition: none !important; }
 }
+
+/* Distinct, locally drawn vector symbols for the More menu. */
+#toolList .tool-action{display:flex;align-items:center;gap:10px;min-height:66px;padding:10px;text-align:left}
+.tool-badge{display:grid;place-items:center;flex-shrink:0;width:34px;height:34px;border-radius:11px;color:#ccb9fa;background:#362d49;border:1px solid #57436d}
+.tool-badge svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tool-badge.warm{color:#f3c297;background:#3d3028;border-color:#68503a}
+.tool-badge.mint{color:#a9ddce;background:#253a36;border-color:#405e55}
+.tool-badge.rose{color:#f0aab7;background:#3e2833;border-color:#63404b}
+.tool-caption{min-width:0;font-size:12px;line-height:1.55;overflow-wrap:anywhere;color:#eee8f7}
+@media(max-width:370px){#toolList .tool-action{gap:7px;padding:8px}.tool-badge{width:30px;height:30px;border-radius:9px}.tool-caption{font-size:11px}}

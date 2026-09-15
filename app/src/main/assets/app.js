@@ -230,6 +230,83 @@ function settings() {
     change(()=>{doc.compensation=n;doc.precision=Number($('precision').value);doc.skipTimed=$('advanceMode').value==='untimed';});
   });$('compensation').value=doc.compensation;$('precision').value=doc.precision;$('advanceMode').value=doc.skipTimed?'untimed':'sequence';
 }
+const toolVisuals={
+  "音樂播放器": {
+    "name": "player",
+    "tone": "warm",
+    "paths": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"5\"/><path d=\"m10 8 6 4-6 4z\"/>"
+  },
+  "歌曲資料": {
+    "name": "song-info",
+    "tone": "violet",
+    "paths": "<path d=\"M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10zM13 3v7h7M8 14h5M8 17h8\"/>"
+  },
+  "整體／區段位移": {
+    "name": "time-shift",
+    "tone": "violet",
+    "paths": "<path d=\"M3 5h18M5 3v4m14-4v4M3 17h18m-14-4-4 4 4 4m10-8 4 4-4 4M10 9h4v4h-4z\"/>"
+  },
+  "分句": {
+    "name": "split",
+    "tone": "violet",
+    "paths": "<path d=\"M12 21v-8c0-4-6-3-6-7V3m6 10c0-4 6-3 6-7V3M3 6l3-3 3 3m6 0 3-3 3 3\"/>"
+  },
+  "與下一句合併": {
+    "name": "merge",
+    "tone": "violet",
+    "paths": "<path d=\"M5 3v3c0 5 7 4 7 9v6M19 3v3c0 5-7 4-7 9M8 17l4 4 4-4\"/>"
+  },
+  "新增一句": {
+    "name": "add-line",
+    "tone": "mint",
+    "paths": "<path d=\"M4 5h16M4 10h12M4 15h6m7-1v8m-4-4h8\"/>"
+  },
+  "刪除此句": {
+    "name": "delete-line",
+    "tone": "rose",
+    "paths": "<path d=\"M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6\"/>"
+  },
+  "從此句試聽": {
+    "name": "audition",
+    "tone": "warm",
+    "paths": "<path d=\"M3 12v-1a9 9 0 0 1 18 0v1M3 11h3v8H3zM18 11h3v8h-3zM10 10l5 3-5 3z\"/>"
+  },
+  "依時間排序": {
+    "name": "sort-time",
+    "tone": "violet",
+    "paths": "<path d=\"M4 4v16m-3-3 3 3 3-3M11 5h4m-4 5h7m-7 5h10m-10 5h10\"/>"
+  },
+  "重做": {
+    "name": "redo",
+    "tone": "violet",
+    "paths": "<path d=\"M18 3l4 4-4 4m4-4H9a6 6 0 0 0 0 12h5\"/>"
+  },
+  "打點設定": {
+    "name": "timing-settings",
+    "tone": "violet",
+    "paths": "<path d=\"M5 3v6m0 4v8m7-18v11m0 4v3m7-18v2m0 4v12M2 9h6v4H2zM9 14h6v4H9zM16 5h6v4h-6z\"/>"
+  },
+  "匯出專案備份": {
+    "name": "backup-export",
+    "tone": "mint",
+    "paths": "<path d=\"M14 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M7 4v5h6M8 21v-6h8v6M16 3h6v6m0-6-7 7\"/>"
+  },
+  "匯入專案備份": {
+    "name": "backup-import",
+    "tone": "mint",
+    "paths": "<path d=\"M14 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6M7 5v5h5M8 21v-6h8v6M22 3l-7 7m0-6v6h6\"/>"
+  },
+  "清空時間": {
+    "name": "clear-time",
+    "tone": "rose",
+    "paths": "<path d=\"M12 3a9 9 0 1 0 9 9M12 7v5l-3 2m8-12 5 5m0-5-5 5\"/>"
+  },
+  "使用說明": {
+    "name": "help",
+    "tone": "violet",
+    "paths": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M9.5 8.5a2.5 2.5 0 0 1 5 .5c0 2-2.5 2-2.5 4m0 3v.1\"/>"
+  }
+};
 function toolMenu() {
   const actions=[
     ['音樂播放器',()=>native?.choosePlayer ? native.choosePlayer() : notify('請在新版 Android App 選擇播放器')],
@@ -247,7 +324,18 @@ function toolMenu() {
     ['使用說明',()=>showDialog('開始製作 LRC','<p class="dialoghint">① 開啟通知存取權。<br>② 在 YouTube Music 播放歌曲，再回到此 App。<br>③ 匯入或貼上歌詞，按「連結目前歌曲」。<br>④ 聽到句首時按「打點」，自動選取下一句。<br>⑤ 點選歌詞，微調時間或編輯文字。<br>⑥ 每句打點完成後匯出 LRC。</p><p class="dialoghint">草稿只保留目前一份，換專案前請匯出專案備份。支援 UTF-8 LRC、TXT、多時間標記及一般中繼資料。未實作逐字 Enhanced LRC。背景播放取決於 YouTube Music 帳號與功能；若切回時停止播放，可使用系統分割畫面。投放到其他裝置時暫停打點。毫秒顯示不代表音訊實際同步精度。</p>',null)]
   ];
   showDialog('更多工具','<div class="tools" id="toolList"></div>',null);
-  for(const [label,fn]of actions){const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{$('dialog').close();fn();};$('toolList').append(b);}
+  for(const [label,fn] of actions){
+    const b=document.createElement('button');b.type='button';b.className='tool-action';
+    const visual=toolVisuals[label];
+    if(visual){
+      const badge=document.createElement('span');badge.className='tool-badge '+visual.tone;
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
+      svg.innerHTML=visual.paths;badge.append(svg);b.append(badge);
+    }
+    const caption=document.createElement('span');caption.className='tool-caption';caption.textContent=label;b.append(caption);
+    b.onclick=()=>{$('dialog').close();fn();};$('toolList').append(b);
+  }
 }
 let importMode='lyrics';
 const receiveLyrics=window.receiveImport;
