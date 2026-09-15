@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
@@ -12,11 +13,16 @@ import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.View;
+import android.view.DisplayCutout;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.graphics.Insets;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
@@ -92,12 +98,57 @@ public final class MainActivity extends Activity {
         });
         setContentView(web);
         web.setOnApplyWindowInsetsListener((v, insets) -> {
-            v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(), insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Keep the camera cutout and keyboard safe, without reserving hidden bars.
+                // Transient system bars overlay the editor instead of shifting the lyrics.
+                Insets safe = insets.getInsets(WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
+                v.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+                return WindowInsets.CONSUMED;
+            }
+            DisplayCutout cutout = insets.getDisplayCutout();
+            int left = cutout == null ? 0 : cutout.getSafeInsetLeft();
+            int top = cutout == null ? 0 : cutout.getSafeInsetTop();
+            int right = cutout == null ? 0 : cutout.getSafeInsetRight();
+            int bottom = cutout == null ? 0 : cutout.getSafeInsetBottom();
+            v.setPadding(Math.max(left, insets.getSystemWindowInsetLeft()),
+                Math.max(top, insets.getSystemWindowInsetTop()),
+                Math.max(right, insets.getSystemWindowInsetRight()),
+                Math.max(bottom, insets.getSystemWindowInsetBottom()));
             return insets.consumeSystemWindowInsets();
         });
+        applyImmersiveMode();
         web.loadUrl("https://app.local/index.html");
     }
-    @Override protected void onResume() { super.onResume(); resumed = true; refresh(); handler.removeCallbacks(ticker); handler.post(ticker); }
+    @Override protected void onResume() { super.onResume(); applyImmersiveMode(); resumed = true; refresh(); handler.removeCallbacks(ticker); handler.post(ticker); }
+    /** Hide both system bars, with edge-swipe access preserved by Android. */
+    @SuppressWarnings("deprecation")
+    private void applyImmersiveMode() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+            WindowInsetsController bars = getWindow().getInsetsController();
+            if (bars != null) {
+                bars.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                bars.hide(WindowInsets.Type.systemBars());
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+        if (web != null) web.requestApplyInsets();
+    }
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) applyImmersiveMode();
+    }
+    @Override public void onConfigurationChanged(Configuration config) {
+        super.onConfigurationChanged(config);
+        if (web != null) web.post(this::applyImmersiveMode);
+    }
     @Override protected void onPause() { resumed = false; handler.removeCallbacks(ticker); super.onPause(); }
     @Override protected void onSaveInstanceState(Bundle out) { out.putString("export", exportText); super.onSaveInstanceState(out); }
     @Override protected void onDestroy() {
